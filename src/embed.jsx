@@ -27,7 +27,12 @@ function findMountNode() {
 async function mount() {
   const host = findMountNode();
   if (!host) return;
-  if (host.shadowRoot) return; // already mounted
+  if (host.shadowRoot) {
+    // Surface the silent no-op so a duplicated <script> tag, GTM
+    // re-firing, or HMR don't look like the widget never loaded.
+    console.warn('[lead-widget] already mounted, skipping');
+    return;
+  }
 
   let config;
   try {

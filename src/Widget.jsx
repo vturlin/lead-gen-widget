@@ -268,6 +268,11 @@ export default function LeadGenWidget({
   );
 
   function handleClose() {
+    // Don't tear the widget down mid-submit. The CRM POST will be
+    // wired in here later (TODO: D-EDGE CRM integration); closing
+    // during the await would leave the request orphaned and
+    // produce a React unmount warning.
+    if (submitting) return;
     if (onClose) onClose();
   }
 

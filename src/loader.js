@@ -35,13 +35,19 @@ function findSelfScript() {
   return null;
 }
 
+// Hotel IDs follow the convention used in the admin: short
+// alphanumeric tokens with optional dashes/underscores. Reject
+// anything else early so a malformed id never reaches the CDN
+// fetch (and so request logs aren't peppered with garbage paths).
+const ID_PATTERN = /^[a-zA-Z0-9_-]{3,64}$/;
+
 function extractIdFromScript() {
   const src = findSelfScript();
   if (!src) return null;
   try {
     const url = new URL(src);
-    const id = url.searchParams.get('id');
-    return id && id.trim() ? id.trim() : null;
+    const id = (url.searchParams.get('id') || '').trim();
+    return ID_PATTERN.test(id) ? id : null;
   } catch {
     return null;
   }
@@ -133,8 +139,12 @@ export async function loadConfig() {
   const id = extractIdFromScript();
   if (id) {
     const url = `${CONFIGS_BASE_URL}${encodeURIComponent(id)}.json`;
+    // Cap the fetch so a flapping CDN can't leave the widget in a
+    // permanent loading state. 5s is generous for a static JSON.
+    const ctrl = new AbortController();
+    const timeout = setTimeout(() => ctrl.abort(), 5000);
     try {
-      const res = await fetch(url, { credentials: 'omit' });
+      const res = await fetch(url, { credentials: 'omit', signal: ctrl.signal });
       if (!res.ok) throw new Error(`HTTP ${res.status} fetching config ${id}`);
       const raw = await res.json();
       raw._hotelId = id;
@@ -148,6 +158,8 @@ export async function loadConfig() {
         return normalizeConfig(window.LEAD_WIDGET_CONFIG);
       }
       throw err;
+    } finally {
+      clearTimeout(timeout);
     }
   }
 
