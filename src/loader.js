@@ -92,7 +92,18 @@ export function normalizeConfig(raw) {
   };
 }
 
+// Restrict preview-mode to the dedicated transparent.html iframe used
+// by the admin app. Without this, an attacker could craft a phishing
+// link `https://hotel.com/?preview=<base64>` that bypasses the
+// remote-fetch path and injects an operator-controlled `message` —
+// rendered via dangerouslySetInnerHTML in the host's origin.
+function isPreviewHost() {
+  if (typeof window === 'undefined') return false;
+  return /\/transparent\.html$/i.test(window.location.pathname);
+}
+
 export function extractPreviewConfig() {
+  if (!isPreviewHost()) return null;
   try {
     const params = new URLSearchParams(window.location.search);
     const b64 = params.get('preview');
