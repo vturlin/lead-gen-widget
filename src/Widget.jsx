@@ -61,6 +61,17 @@ const STYLE_TEXT = `
     height: 140px !important;
   }
 }
+
+/* Respect the user's motion preferences — the shake on bad email
+   submit is the only animation that survives the previous cleanup,
+   and it can be unpleasant for users with vestibular disorders. */
+@media (prefers-reduced-motion: reduce) {
+  .leadwidget-card,
+  .leadwidget-card * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
 `;
 
 function ensureKeyframes(rootNode) {
@@ -205,6 +216,14 @@ export default function LeadGenWidget({
       : document;
     ensureKeyframes(root);
   }, []);
+
+  // Move focus into the dialog when it appears so screen-reader and
+  // keyboard users land in the field they came for, and so the modal
+  // semantics promised by aria-modal aren't a lie.
+  useEffect(() => {
+    if (submittedEmail) return;
+    emailInputRef.current?.focus();
+  }, [submittedEmail]);
 
   // Esc closes the popup, matching standard modal UX.
   useEffect(() => {
