@@ -248,7 +248,15 @@ export default function LeadGenWidget({
             <form onSubmit={handleSubmit} noValidate style={styles.form}>
               <span style={styles.badge}>{badgeLabel}</span>
               <h3 id={emailLabelId} style={styles.title}>{title}</h3>
-              <p style={styles.message}>{message}</p>
+              {/* Message is sanitized server-side (admin/Gemini route)
+                  to allow only <strong> and <em>, no attributes. We
+                  render it as HTML so the operator can emphasize a
+                  word or two. The same field can also be plain text
+                  when written by hand — both work. */}
+              <p
+                style={styles.message}
+                dangerouslySetInnerHTML={{ __html: message }}
+              />
 
               <label style={styles.fieldLabel} htmlFor={emailLabelId + '-input'}>
                 Email address
