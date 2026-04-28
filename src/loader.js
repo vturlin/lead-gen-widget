@@ -56,12 +56,21 @@ export function normalizeConfig(raw) {
   if (!raw || typeof raw !== 'object') return {};
   const pick = (k) =>
     typeof raw[k] === 'string' && raw[k].trim() ? raw[k] : undefined;
+  // Image width: clamp to a usable range so a misconfigured value
+  // can't push the content pane off-screen. Falls back to undefined
+  // when missing so the component default (300) wins.
+  let imageWidth;
+  if (Number.isFinite(raw.imageWidth)) {
+    imageWidth = Math.max(180, Math.min(500, Math.round(raw.imageWidth)));
+  }
+
   return {
     _hotelId: raw._hotelId || null,
     title: pick('title'),
     message: pick('message'),
     imageUrl: pick('imageUrl'),
     imageAlt: pick('imageAlt'),
+    imageWidth,
     buttonColor: pick('buttonColor'),
     buttonHoverColor: pick('buttonHoverColor'),
     buttonLabel: pick('buttonLabel'),

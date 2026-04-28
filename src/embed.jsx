@@ -49,6 +49,7 @@ async function mount() {
       message={config.message}
       imageUrl={config.imageUrl}
       imageAlt={config.imageAlt}
+      imageWidth={config.imageWidth}
       buttonColor={config.buttonColor}
       buttonHoverColor={config.buttonHoverColor}
       buttonLabel={config.buttonLabel}

@@ -95,6 +95,10 @@ export default function LeadGenWidget({
   message = 'Seasonal offers, local recommendations, and quiet weekends — delivered once a month. No filler.',
   imageUrl = DEFAULT_IMAGE,
   imageAlt = '',
+  // Desktop image-pane width in px. Bounded server-side so the
+  // content pane stays usable; mobile (<480px) reflows the image
+  // to 100% width and ignores this value.
+  imageWidth = 300,
   buttonColor = '#432975',
   buttonHoverColor,
   buttonLabel = 'Subscribe',
@@ -215,8 +219,8 @@ export default function LeadGenWidget({
 
   // ── Styles ────────────────────────────────────────────────────────
   const styles = useMemo(
-    () => buildStyles(buttonColor, hoverColor, buttonHover, emailError),
-    [buttonColor, hoverColor, buttonHover, emailError]
+    () => buildStyles(buttonColor, hoverColor, buttonHover, emailError, imageWidth),
+    [buttonColor, hoverColor, buttonHover, emailError, imageWidth]
   );
 
   return (
@@ -427,8 +431,12 @@ function CheckCircle({ color }) {
   );
 }
 
-function buildStyles(buttonColor, hoverColor, buttonHover, emailError) {
+function buildStyles(buttonColor, hoverColor, buttonHover, emailError, imageWidth) {
   const inputBorderColor = emailError ? '#EF4444' : '#E7E5E4';
+  // Card width tracks the image pane: 220 → 560, 300 → 640, 380 → 720,
+  // 440 → 780. Keeps the content pane at 340px regardless of the chosen
+  // image size so the form stays comfortable to fill in.
+  const cardWidth = imageWidth + 340;
   return {
     backdrop: {
       position: 'fixed',
@@ -446,14 +454,14 @@ function buildStyles(buttonColor, hoverColor, buttonHover, emailError) {
       top: '50%',
       left: '50%',
       transform: 'translate(-50%, -50%)',
-      width: 640,
+      width: cardWidth,
       maxWidth: 'calc(100vw - 32px)',
       background: '#FFFFFF',
       borderRadius: 8,
       boxShadow:
         '0 20px 50px -10px rgba(20, 14, 28, 0.25), 0 4px 12px rgba(20, 14, 28, 0.10)',
       display: 'grid',
-      gridTemplateColumns: '300px 1fr',
+      gridTemplateColumns: `${imageWidth}px 1fr`,
       overflow: 'hidden',
       animation: 'leadwidget-pop-in 360ms cubic-bezier(.2,.7,.3,1)',
       fontFamily: '"Open Sans", system-ui, sans-serif',
@@ -476,7 +484,7 @@ function buildStyles(buttonColor, hoverColor, buttonHover, emailError) {
       zIndex: 2,
     },
     imagePane: {
-      width: 300,
+      width: imageWidth,
       height: '100%',
       background: '#F4EFE8',
     },
