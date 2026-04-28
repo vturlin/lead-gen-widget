@@ -537,29 +537,16 @@ function CheckCircle({ color }) {
   );
 }
 
-function buildStyles(buttonColor, hoverColor, buttonHover, emailError, imageWidth) {
+function buildStyles(buttonColor, hoverColor, buttonHover, emailError, imageWidth, position) {
   const inputBorderColor = emailError ? '#EF4444' : '#E7E5E4';
   // Card width tracks the image pane: 220 → 560, 300 → 640, 380 → 720,
   // 440 → 780. Keeps the content pane at 340px regardless of the chosen
   // image size so the form stays comfortable to fill in.
   const cardWidth = imageWidth + 340;
   return {
-    backdrop: {
-      position: 'fixed',
-      inset: 0,
-      background: 'rgba(20, 14, 28, 0.45)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 2147483000,
-      animation: 'leadwidget-backdrop-in 280ms ease-out',
-      fontFamily: '"Open Sans", system-ui, sans-serif',
-    },
     card: {
       position: 'fixed',
-      top: '50%',
-      left: '50%',
-      transform: 'translate(-50%, -50%)',
+      ...positionStyle(position),
       width: cardWidth,
       maxWidth: 'calc(100vw - 32px)',
       background: '#FFFFFF',
@@ -569,7 +556,6 @@ function buildStyles(buttonColor, hoverColor, buttonHover, emailError, imageWidt
       display: 'grid',
       gridTemplateColumns: `${imageWidth}px 1fr`,
       overflow: 'hidden',
-      animation: 'leadwidget-pop-in 360ms cubic-bezier(.2,.7,.3,1)',
       fontFamily: '"Open Sans", system-ui, sans-serif',
     },
     closeBtn: {
