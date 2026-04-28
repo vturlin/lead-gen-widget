@@ -41,6 +41,24 @@ const STYLE_TEXT = `
   from { opacity: 0; }
   to   { opacity: 1; }
 }
+
+/* Mobile (≤ 480px): reflow the card vertically — image on top with a
+   fixed 140px height, content underneath. The cap on max-height +
+   overflow-y keeps the popup usable on landscape phones where the
+   stacked layout could otherwise overflow the viewport. !important
+   is needed to win against the React inline styles we set on the
+   same elements for the desktop layout. */
+@media (max-width: 480px) {
+  .leadwidget-card {
+    grid-template-columns: 1fr !important;
+    max-height: 92vh !important;
+    overflow-y: auto !important;
+  }
+  .leadwidget-image-pane {
+    width: 100% !important;
+    height: 140px !important;
+  }
+}
 `;
 
 function ensureKeyframes(rootNode) {
@@ -206,6 +224,7 @@ export default function LeadGenWidget({
       <div
         ref={cardRef}
         style={styles.card}
+        className="leadwidget-card"
         role="dialog"
         aria-modal="true"
         aria-labelledby={emailLabelId}
@@ -227,7 +246,7 @@ export default function LeadGenWidget({
           </svg>
         </button>
 
-        <div style={styles.imagePane}>
+        <div style={styles.imagePane} className="leadwidget-image-pane">
           {imageUrl && (
             <img
               src={imageUrl}
