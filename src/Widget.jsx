@@ -10,7 +10,7 @@
  *
  * Props (all optional):
  *   title, message, imageUrl, imageAlt, buttonColor, buttonHoverColor,
- *   buttonLabel, badgeLabel, privacyPolicyUrl, onSubmit, onClose
+ *   buttonLabel, privacyPolicyUrl, onSubmit, onClose
  */
 
 import { useState, useRef, useEffect, useId, useMemo } from 'react';
@@ -166,7 +166,6 @@ export default function LeadGenWidget({
   buttonColor = '#432975',
   buttonHoverColor,
   buttonLabel = 'Subscribe',
-  badgeLabel = 'Newsletter',
   privacyPolicyUrl = '#',
   // Display behaviour
   position = 'center',
@@ -377,7 +376,6 @@ export default function LeadGenWidget({
             />
           ) : (
             <form onSubmit={handleSubmit} noValidate style={styles.form}>
-              <span style={styles.badge}>{badgeLabel}</span>
               <h3 id={emailLabelId} style={styles.title}>{title}</h3>
               {/* Message is sanitized server-side (admin/Gemini route)
                   to allow only <strong> and <em>, no attributes. We
@@ -613,17 +611,6 @@ function buildStyles(buttonColor, hoverColor, buttonHover, emailError, imageWidt
       flexDirection: 'column',
       gap: 10,
       margin: 0,
-    },
-    badge: {
-      alignSelf: 'flex-start',
-      padding: '3px 10px',
-      background: '#ECE2FF',
-      color: '#8764C9',
-      fontSize: 10,
-      fontWeight: 700,
-      letterSpacing: '0.08em',
-      textTransform: 'uppercase',
-      borderRadius: 999,
     },
     title: {
       fontSize: 20,

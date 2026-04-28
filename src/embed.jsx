@@ -53,7 +53,6 @@ async function mount() {
       buttonColor={config.buttonColor}
       buttonHoverColor={config.buttonHoverColor}
       buttonLabel={config.buttonLabel}
-      badgeLabel={config.badgeLabel}
       privacyPolicyUrl={config.privacyPolicyUrl}
       onClose={() => {
         // Default close: unmount the popup. Host can override by

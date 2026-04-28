@@ -74,7 +74,6 @@ export function normalizeConfig(raw) {
     buttonColor: pick('buttonColor'),
     buttonHoverColor: pick('buttonHoverColor'),
     buttonLabel: pick('buttonLabel'),
-    badgeLabel: pick('badgeLabel'),
     privacyPolicyUrl: pick('privacyPolicyUrl'),
     _preview: raw._preview === true,
   };
