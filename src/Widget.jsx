@@ -24,9 +24,9 @@ const DEFAULT_IMAGE =
 // widgets coexist on the same page (extremely rare but cheap to support).
 const STYLE_ID = 'lead-widget-keyframes';
 const STYLE_TEXT = `
-@keyframes leadwidget-pop-in {
-  from { opacity: 0; transform: translate(-50%, calc(-50% + 8px)); }
-  to   { opacity: 1; transform: translate(-50%, -50%); }
+@keyframes leadwidget-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 @keyframes leadwidget-shake {
   0%, 100% { transform: translateX(0); }
@@ -37,19 +37,21 @@ const STYLE_TEXT = `
   75%      { transform: translateX(-2px); }
   90%      { transform: translateX(2px); }
 }
-@keyframes leadwidget-backdrop-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
 
 /* Mobile (≤ 480px): reflow the card vertically — image on top with a
-   fixed 140px height, content underneath. The cap on max-height +
-   overflow-y keeps the popup usable on landscape phones where the
-   stacked layout could otherwise overflow the viewport. !important
-   is needed to win against the React inline styles we set on the
-   same elements for the desktop layout. */
+   fixed 140px height, content underneath. Resets corner anchoring +
+   the centring transform so the popup renders as a single bottom-
+   aligned full-width sheet. !important is needed to win against the
+   React inline styles we set on the same elements for desktop. */
 @media (max-width: 480px) {
   .leadwidget-card {
+    left: 12px !important;
+    right: 12px !important;
+    top: auto !important;
+    bottom: 12px !important;
+    transform: none !important;
+    width: auto !important;
+    max-width: none !important;
     grid-template-columns: 1fr !important;
     max-height: 92vh !important;
     overflow-y: auto !important;
@@ -75,6 +77,68 @@ function ensureKeyframes(rootNode) {
   style.id = STYLE_ID;
   style.textContent = STYLE_TEXT;
   target.appendChild(style);
+}
+
+// Position-aware fixed offsets. 'center' keeps the modal-style
+// centered placement (no backdrop anymore — the page underneath
+// stays interactive); the six corner positions pin the card to
+// that edge with a 24px inset. Mobile media query overrides this
+// to a bottom-aligned full-width sheet regardless of the choice.
+function positionStyle(position) {
+  switch (position) {
+    case 'top-left':
+      return { top: 24, left: 24 };
+    case 'top-right':
+      return { top: 24, right: 24 };
+    case 'center-left':
+      return { top: '50%', left: 24, transform: 'translateY(-50%)' };
+    case 'center-right':
+      return { top: '50%', right: 24, transform: 'translateY(-50%)' };
+    case 'bottom-left':
+      return { bottom: 24, left: 24 };
+    case 'bottom-right':
+      return { bottom: 24, right: 24 };
+    case 'center':
+    default:
+      return { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' };
+  }
+}
+
+// Visibility gate. 'immediate' (or undefined) renders straight
+// away; 'time' waits triggerDelaySec seconds; 'scroll' waits for
+// the user to scroll past triggerScrollPercent of the page;
+// 'time_or_scroll' fires on whichever lands first.
+function useTriggeredVisibility(triggerMode, triggerDelaySec, triggerScrollPercent) {
+  const isImmediate = !triggerMode || triggerMode === 'immediate';
+  const [visible, setVisible] = useState(isImmediate);
+
+  useEffect(() => {
+    if (isImmediate || visible) return;
+    const fire = () => setVisible(true);
+    let timer;
+    let scrollHandler;
+
+    if (triggerMode === 'time' || triggerMode === 'time_or_scroll') {
+      const ms = Math.max(0, triggerDelaySec || 5) * 1000;
+      timer = setTimeout(fire, ms);
+    }
+    if (triggerMode === 'scroll' || triggerMode === 'time_or_scroll') {
+      const threshold = (triggerScrollPercent || 50) / 100;
+      scrollHandler = () => {
+        const max = document.documentElement.scrollHeight - window.innerHeight;
+        if (max <= 0) return;
+        if (window.scrollY / max >= threshold) fire();
+      };
+      window.addEventListener('scroll', scrollHandler, { passive: true });
+    }
+
+    return () => {
+      if (timer) clearTimeout(timer);
+      if (scrollHandler) window.removeEventListener('scroll', scrollHandler);
+    };
+  }, [isImmediate, triggerMode, triggerDelaySec, triggerScrollPercent, visible]);
+
+  return visible;
 }
 
 // Small hex utility — no colorjs.io dep, the spec just says "auto-darken
@@ -104,6 +168,16 @@ export default function LeadGenWidget({
   buttonLabel = 'Subscribe',
   badgeLabel = 'Newsletter',
   privacyPolicyUrl = '#',
+  // Display behaviour
+  position = 'center',
+  triggerMode = 'immediate',
+  triggerDelaySec = 5,
+  triggerScrollPercent = 50,
+  // When true, a click anywhere outside the card dismisses the
+  // popup. Default false: the operator opts in explicitly because
+  // a corner-anchored popup that closes on any click would be
+  // surprising.
+  dismissOnOutsideClick = false,
   onSubmit,
   onClose,
 }) {
@@ -143,6 +217,37 @@ export default function LeadGenWidget({
     return () => document.removeEventListener('keydown', onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [submittedEmail]);
+
+  // Optional click-outside dismissal. composedPath() lets us
+  // correctly resolve the target through Shadow DOM — without it
+  // the event target on a shadow-mounted widget would always be
+  // the host node, never the card itself.
+  useEffect(() => {
+    if (!dismissOnOutsideClick) return;
+    if (submittedEmail) return;
+    const onClick = (e) => {
+      const path = typeof e.composedPath === 'function' ? e.composedPath() : [];
+      if (path.includes(cardRef.current)) return;
+      handleClose();
+    };
+    // setTimeout 0 so the click that opened the widget (if it
+    // bubbled to document) doesn't immediately dismiss it.
+    const t = setTimeout(() => document.addEventListener('mousedown', onClick), 0);
+    return () => {
+      clearTimeout(t);
+      document.removeEventListener('mousedown', onClick);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dismissOnOutsideClick, submittedEmail]);
+
+  // Visibility gate — ALL hooks above this point run unconditionally,
+  // and the styles useMemo below also runs before the early return,
+  // so the React rules-of-hooks invariant holds across both branches.
+  const triggerVisible = useTriggeredVisibility(
+    triggerMode,
+    triggerDelaySec,
+    triggerScrollPercent
+  );
 
   function handleClose() {
     if (onClose) onClose();
@@ -219,17 +324,20 @@ export default function LeadGenWidget({
 
   // ── Styles ────────────────────────────────────────────────────────
   const styles = useMemo(
-    () => buildStyles(buttonColor, hoverColor, buttonHover, emailError, imageWidth),
-    [buttonColor, hoverColor, buttonHover, emailError, imageWidth]
+    () => buildStyles(
+      buttonColor, hoverColor, buttonHover, emailError, imageWidth, position
+    ),
+    [buttonColor, hoverColor, buttonHover, emailError, imageWidth, position]
   );
 
+  if (!triggerVisible) return null;
+
   return (
-    <div style={styles.backdrop} role="presentation" onClick={handleClose}>
-      <div
-        ref={cardRef}
-        style={styles.card}
-        className="leadwidget-card"
-        role="dialog"
+    <div
+      ref={cardRef}
+      style={styles.card}
+      className="leadwidget-card"
+      role="dialog"
         aria-modal="true"
         aria-labelledby={emailLabelId}
         onClick={(e) => e.stopPropagation()}
