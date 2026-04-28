@@ -490,7 +490,6 @@ export default function LeadGenWidget({
             </form>
           )}
         </div>
-      </div>
     </div>
   );
 }
