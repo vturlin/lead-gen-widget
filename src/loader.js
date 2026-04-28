@@ -52,6 +52,19 @@ function extractIdFromScript() {
  * fields are optional — undefined values let the component fall back
  * to its built-in defaults.
  */
+// Reject href values that aren't a regular link target — most
+// importantly `javascript:` and `data:`, which would execute in the
+// host origin when clicked. Allow http(s), mailto, and the inert
+// '#' default. Anything else falls back to '#'.
+function safeHref(value) {
+  if (typeof value !== 'string') return undefined;
+  const v = value.trim();
+  if (!v || v === '#') return undefined;
+  if (/^https?:\/\//i.test(v)) return v;
+  if (/^mailto:/i.test(v)) return v;
+  return undefined;
+}
+
 export function normalizeConfig(raw) {
   if (!raw || typeof raw !== 'object') return {};
   const pick = (k) =>
@@ -74,7 +87,7 @@ export function normalizeConfig(raw) {
     buttonColor: pick('buttonColor'),
     buttonHoverColor: pick('buttonHoverColor'),
     buttonLabel: pick('buttonLabel'),
-    privacyPolicyUrl: pick('privacyPolicyUrl'),
+    privacyPolicyUrl: safeHref(raw.privacyPolicyUrl),
     _preview: raw._preview === true,
   };
 }
