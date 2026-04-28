@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Lead Gen Widget — preview</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      height: 100%;
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+  <!--
+    Loaded inside the admin's <iframe> with a ?preview=<base64> query
+    string carrying the live form state. The widget's loader.js reads
+    that param and short-circuits the remote fetch, so the operator
+    sees their edits in real time without publishing.
+  -->
+  <script async src="https://vturlin.github.io/lead-gen-widget/widget.js"></script>
+</body>
+</html>

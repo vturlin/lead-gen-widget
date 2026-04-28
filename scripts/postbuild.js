@@ -17,10 +17,12 @@ function copy(from, to) {
 
 console.log('\n📦 Post-build:');
 
-// Demo page
-const demoSrc = path.join(root, 'public/demo.html');
-if (fs.existsSync(demoSrc)) {
-  copy(demoSrc, path.join(dist, 'demo.html'));
+// Demo page + admin preview iframe page
+for (const file of ['demo.html', 'transparent.html']) {
+  const src = path.join(root, 'public', file);
+  if (fs.existsSync(src)) {
+    copy(src, path.join(dist, file));
+  }
 }
 
 // Per-hotel configs (optional — populated by the admin app at publish time)
