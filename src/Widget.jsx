@@ -24,10 +24,6 @@ const DEFAULT_IMAGE =
 // widgets coexist on the same page (extremely rare but cheap to support).
 const STYLE_ID = 'lead-widget-keyframes';
 const STYLE_TEXT = `
-@keyframes leadwidget-fade-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
 @keyframes leadwidget-shake {
   0%, 100% { transform: translateX(0); }
   15%      { transform: translateX(-5px); }
@@ -654,11 +650,10 @@ function buildStyles(buttonColor, hoverColor, buttonHover, emailError, imageWidt
       fontFamily: 'inherit',
       outline: 'none',
       transition: 'border-color 140ms',
-      // Focus colour is applied via onFocus/onBlur in the future if
-      // needed; React inline styles do not support :focus, so for now
-      // the spec's "focus = buttonColor" border is approximated by the
-      // browser default focus ring (visible on keyboard navigation)
-      // plus the explicit error-state colour above.
+      // React inline styles don't support :focus, so the spec's
+      // "focus = buttonColor" is approximated by the browser's
+      // default focus ring (visible under keyboard nav) plus the
+      // explicit error-state colour above.
     },
     inlineError: {
       fontSize: 12,
